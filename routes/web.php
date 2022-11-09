@@ -14,9 +14,6 @@ use App\Http\Controllers\FileController;
 |
 */
 
-Route::get('/',[FileController::class,'index'])->name('view');
-Route::get('/file-import',[FileController::class,'importView'])->name('import-view');
 Route::post('/import',[FileController::class,'import'])->name('import');
-Route::get('/export-users',[FileController::class,'exportUsers'])->name('export-users');
 Route::post('file-upload', [FileController::class, 'store'])->name('file.store');
 

@@ -7,6 +7,7 @@ use App\Models\User;
 use App\Jobs\FileRead;
 use App\Imports\ImportUser;
 use Maatwebsite\Excel\Facades\Excel;
+use Maatwebsite\Excel\Concerns\Skip;
 use File;
 
 
@@ -26,51 +27,28 @@ class FileController extends Controller
      * @return \Illuminate\Http\Response
      */
 
-    public function index()
-    {
-        return view('welcome');
-    }
     /**
      * Display a listing of the resource.
      *
      * @return \Illuminate\Http\Response
      */
-    public function store(Request $request)
-    {
-        $request->validate([
-            'file' => 'required|mimes:pdf,xls,csv|max:2048',
-        ]);
-    
-        $fileName = time().'.'.$request->file->extension();
-     
-        $request->file->move(public_path('uploads'), $fileName);
-   
-        $this->user->insert(['file-name'=>$fileName]);
-
-        $job = new FileRead($fileName);
-                dispatch($job);
-               
-        return back()
-            ->with('success','You have successfully upload file.')
-            ->with('file', $fileName);
-   
-    }
 
     public function importView(Request $request){
         return view('importFile');
     }
 
-    public function import(Request $request){
-        Excel::import(new ImportUser, $request->file('file')->store('files'));
+    public function import(Request $request)
+    {
         $request->validate([
             'file' => 'required|mimes:pdf,xls,csv|max:2048',
         ]);
-        $fileName = time().'.'.$request->file->extension();
+        $data = $request->file;
+        $job = new FileRead($data);
+                dispatch($job);
+        $fileName = 'file'.time().'.'.$request->file->extension();
         $request->file->move(public_path('uploads'), $fileName);
         $this->user->insert(['file-name'=>$fileName]);
-      
-        $job = new FileRead($fileName);
-                dispatch($job);
+        
 
         return redirect()->back()->with('success','You have successfully upload file.');
     }
