@@ -14,13 +14,14 @@ use App\Http\Controllers\FileController;
 |
 */
 
+Route::get('/file-import', [FileController::class, 'importView']);
 Route::post('/import',[FileController::class,'import'])->name('import');
 Route::post('file-upload', [FileController::class, 'store'])->name('file.store');
 
 //Media library routes
-Route::get('/fileupload', [FileController::class, 'mediaLibrary'])->name('media-library');
+Route::get('/chunkupload', [FileController::class, 'mediaLibrary'])->name('media-library');
 
 //FILE UPLOADS CONTROLER
-Route::post('/upload', [FileController::class, 'upload'])->name('file-uploads');
+Route::post('/upload', [FileController::class, 'upload'])->name('upload');
 Route::post('/delete', [FileController::class, 'delete'])->name('file-delete');
 

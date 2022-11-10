@@ -14,7 +14,8 @@ class ImportUser implements ToCollection
     */
     public function collection(Collection $collection)
     {
-        return $collection;
+       
+        return $collection[0];
     }
 
 }

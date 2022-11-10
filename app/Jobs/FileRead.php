@@ -39,12 +39,16 @@ class FileRead
 
                 $data = $this->data;
                 $inputData = Excel::import(new ImportUser(), $data)->toArray(new ImportUser(), $data);
+                $totalDataCount = count($inputData);
                 $length = count($inputData[0]);
+                $chunkSize = 3;
+                $output = array_chunk($inputData[0], $chunkSize);
                 for ($i = 1; $i < $length; $i++) {
                         $data = [];
-                        $data['user_id'] = $inputData[0][$i][0];
-                        $data['name'] = $inputData[0][$i][1];
-                        $data['email'] = $inputData[0][$i][2];
+                        $data['user_id'] = $output[0][$i][0];
+                        $data['name'] = $output[0][$i][1];
+                        $data['email'] = $output[0][$i][2];
+                        
                          $this->addDataToDb($data);
                 }
                 return true;

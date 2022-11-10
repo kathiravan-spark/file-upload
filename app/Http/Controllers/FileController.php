@@ -16,6 +16,7 @@ use Pion\Laravel\ChunkUpload\Exceptions\UploadMissingFileException;
 use Pion\Laravel\ChunkUpload\Handler\AbstractHandler;
 use Pion\Laravel\ChunkUpload\Handler\HandlerFactory;
 use Pion\Laravel\ChunkUpload\Receiver\FileReceiver;
+use App\Models\Media;
 
 
 class FileController extends Controller
@@ -59,10 +60,10 @@ class FileController extends Controller
 
         return redirect()->back()->with('success','You have successfully upload file.');
     }
-    public function mediaLibrary(){
-       
+    public function mediaLibrary()
+    {
         return view('medialibrary');
-      }
+    }
 
     /**
      * Handles the file upload
@@ -74,10 +75,10 @@ class FileController extends Controller
      * @throws UploadMissingFileException
      * @throws UploadFailedException
      */
-    public function upload(Request $request) {  
+    public function upload(Request $request)
+    {  
         // create the file receiver
         $receiver = new FileReceiver("file", $request, HandlerFactory::classFromRequest($request));
-
         // check if the upload is success, throw exception or return response you need
         if ($receiver->isUploaded() === false) {
         throw new UploadMissingFileException();
@@ -109,64 +110,68 @@ class FileController extends Controller
      *
      * @return JsonResponse
      */
-    protected function saveFile(UploadedFile $file, Request $request) {
-        $user_obj = auth()->user();
+    protected function saveFile(UploadedFile $file, Request $request)
+    {
+        
         $fileName = $this->createFilename($file);
-
-        // Get file mime type
         $mime_original = $file->getMimeType();
         $mime = str_replace('/', '-', $mime_original);
-
         $folderDATE = $request->dataDATE;
-
         $folder  = $folderDATE;
-        $filePath = "public/upload/medialibrary/{$user_obj->id}/{$folder}/";
+        $filePath = "public/upload/medialibrary/{$folder}/";
         $finalPath = storage_path("app/".$filePath);
-
         $fileSize = $file->getSize();
         // move the file name
         $file->move($finalPath, $fileName);
-
-        $url_base = 'storage/upload/medialibrary/'.$user_obj->id."/{$folderDATE}/".$fileName;
-
-        return response()->json([
-        'path' => $filePath,
-        'name' => $fileName,
-        'mime_type' => $mime
-        ]);
+        $url_base = 'storage/upload/medialibrary/'."/{$folderDATE}/".$fileName;
+        $control_var = Media::create([
+            'name' => $fileName,
+            'mime' => $mime_original,
+            'path' => $filePath,
+            'url' => $url_base,
+            'size' =>$fileSize
+          ]);
+        return $this->chunkFileUpload($request);
     }
-
-    /**
-     * Delete uploaded file WEB ROUTE
-     * @param Request request
-     * @return JsonResponse
-     */
-
-    public function delete (Request $request){
-
-        $user_obj = auth()->user();
-
-        $file = $request->filename;
-
-        //delete timestamp from filename
-        $temp_arr = explode('_', $file);
+    protected function createFilename(UploadedFile $file)
+    {
+        $extension = $file->getClientOriginalExtension();
+        
+        $filename = str_replace(".".$extension, "", $file->getClientOriginalName()); // Filename without extension
+     
+        //delete timestamp from file name
+        $temp_arr = explode('_', $filename);
         if ( isset($temp_arr[0]) ) unset($temp_arr[0]);
-        $file = implode('_', $temp_arr);
-
-        $dir = $request->date;
-
-        $filePath = "public/upload/medialibrary/{$user_obj->id}/{$dir}/";
-        $finalPath = storage_path("app/".$filePath);
-
-        if ( unlink($finalPath.$file) ){
-        return response()->json([
-            'status' => 'ok'
-        ], 200);
-        }
-        else{
-        return response()->json([
-            'status' => 'error'
-        ], 403);
+        $filename = implode('_', $temp_arr);
+       
+        //here you can manipulate with file name e.g. HASHED
+        return $filename.".".$extension;
+    }
+    public function chunkFileUpload($request)
+    {
+        $inputData = Excel::import(new ImportUser(), $request->file)->toArray(new ImportUser(),$request->file);
+                dd($inputData);
+        $length = count($inputData[0]);
+                for ($i = 1; $i < $length; $i++) {
+                        $data = [];
+                        $data['user_id'] = $inputData[0][$i][0];
+                        $data['name'] = $inputData[0][$i][1];
+                        $data['email'] = $inputData[0][$i][2];
+                         $this->addDataToDb($data);
+                }
+                return true;
+    }
+    public function addDataToDb($data)
+    {
+        $limit = 5;
+        foreach (array_chunk($data, $limit) as $chunkedArray) {
+            dd($chunkedArray);
+                UserDetail::insert([
+                            'user_id' => $data['user_id'],
+                            'name' => $data['name'],
+                            'email' => $data['email'],
+                        ]);
+                        return true;
         }
     }
 }

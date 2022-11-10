@@ -19,7 +19,112 @@
     <link rel="dns-prefetch" href="//fonts.gstatic.com">
     <!-- Styles -->
    
-   
+   <style>
+
+.drag-text {
+  text-align: center;
+}
+
+.drag-text h4 {
+  font-weight: 100;
+  text-transform: uppercase;
+  color: #002b5c;
+  padding: 60px 0;
+}
+.file-upload-image {
+  max-height: 100px;
+  max-width: 100px;
+  margin: auto;
+  padding: 20px;
+}
+
+.remove-image {
+  width: 200px;
+  margin: 0;
+  color: #fff;
+  background: #cd4535;
+  border: none;
+  padding: 10px;
+  border-radius: 4px;
+  border-bottom: 4px solid #b02818;
+  transition: all 0.2s ease;
+  outline: none;
+  text-transform: uppercase;
+  font-weight: 700;
+}
+
+.remove-image:hover {
+  background: #c13b2a;
+  color: #ffffff;
+  transition: all 0.2s ease;
+  cursor: pointer;
+}
+.file-upload {
+  background-color: #ffffff;
+  width: 400px;
+  padding: 10px 0 30px 0;
+  border-radius: 3px;
+}
+
+.file-upload-btn {
+  width: 100%;
+  margin: 0;
+  color: #fff;
+  background: #1fb264;
+  border: none;
+  padding: 10px;
+  border-radius: 4px;
+  border-bottom: 4px solid #15824b;
+  transition: all 0.2s ease;
+  outline: none;
+  text-transform: uppercase;
+  font-weight: 700;
+}
+
+.file-upload-btn:hover {
+  background: #1aa059;
+  color: #ffffff;
+  transition: all 0.2s ease;
+  cursor: pointer;
+}
+
+.file-upload-btn:active {
+  border: 0;
+  transition: all 0.2s ease;
+}
+
+.file-upload-content {
+  display: none;
+  text-align: center;
+  border: 1px dashed #002b5c;
+  position: relative;
+  border-radius: 5px;
+}
+
+.file-upload-input {
+  position: absolute;
+  margin: 0;
+  padding: 0;
+  width: 100%;
+  height: 100%;
+  outline: none;
+  opacity: 0;
+  cursor: pointer;
+}
+
+.image-upload-wrap {
+  border: 1px dashed #002b5c;
+  position: relative;
+  border-radius: 5px;
+}
+
+.image-title-wrap {
+  padding: 0 15px 15px 15px;
+  color: #222;
+}
+
+   </style>
+
 </head>
 <body>
     <div id="app">
@@ -43,32 +148,69 @@
                     </div>
                 </div>
             </div>
-            <div class="modal fade" id="uploaderModal" tabindex="-1" role="dialog" aria-labelledby="uploadModalLabel" aria-hidden="true">
-                <div class="modal-dialog modal-dialog-centered modal-lg" role="document">
-                    <div class="modal-content">
-                        <div class="modal-header">
-                            <h5 class="modal-title" id="uploadModalLabel">Upload file</h5>
-                            <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                                <span aria-hidden="true">&times;</span>
-                            </button>
-                        </div>
-                        <div class="modal-body">
-                            <div class="form-group row">
-                                <h5>Upload File</h5>
+                            <!-- Modal -->
+                <div class="modal fade" id="uploaderModal" tabindex="-1" aria-labelledby="uploaderModalLabel" aria-hidden="true">
+                    <div class="modal-dialog modal-dialog-centered">
+                        <div class="modal-content">
+                            <div class="modal-header">
+                                <h5 class="modal-title" id="uploaderModalLabel">Import File</h5>  
                             </div>
-                        <div id="uploaderHolder">
-                            <form action="{{ route('file-uploads') }}" class="dropzone" id="datanodeupload">
-                               @csrf
-                                <input type="file" name="file">
-                            </form>
+                            <div class="modal-body dropzone">   
+                                <form action="{{ route('upload') }}" method="POST" enctype="multipart/form-data">
+                                    @csrf
+                                    <div class="image-upload-wrap">
+                                        <input name="file" class="bulk-search-validate file-upload-input" type='file' accept=".csv,.xls" onchange="readURL(this);" required />
+                                            <div class="drag-text">
+                                              <h4>Drag and drop a csv or xls file</h4>
+                                            </div>
+                                    </div>
+                                    <div class="file-upload-content">
+                                        <img class="file-upload-image" src="{{asset('/img/file-icon.jpg')}}" width="100" height="100" alt="your image"/>
+                                        <div class="image-title-wrap">
+                                             <button type="button" onclick="removeUpload()" class="remove-image">
+                                             Remove <span class="image-title">Uploaded Image</span></button>
+                                        </div>
+                                    </div>
+                                    <div class="modal-footer mt-2 mb-2">
+                                        <button type="submit" class="btn btn-success">Upload</button>
+                                        <button type="button" class="btn btn-info" data-bs-dismiss="modal">Close</button>
+                                        
+                                    </div>
+                                </form>
+                            </div>
                         </div>
-                    </div>
-                    <div class="modal-footer">
-                        <button type="button" class="btn btn-primary" onClick="window.location.reload();">{{ __('Done') }}</button>
                     </div>
                 </div>
-            </div>
         </main>
+        <script>
+            function readURL(input) {
+    if (input.files && input.files[0]) {
+        var reader = new FileReader();
+        reader.onload = function(e) {
+            $('.image-upload-wrap').hide();
+            $('.file-upload-content').show();
+            $('.image-title').html(input.files[0].name);
+        };
+        reader.readAsDataURL(input.files[0]);
+    } else {
+        removeUpload();
+    }
+}
+
+// Deathcheck | Remove Image With Preview
+function removeUpload() {
+            $('.file-upload-input').replaceWith($('.file-upload-input').clone());
+            $('.file-upload-content').hide();
+            $('.image-upload-wrap').show();
+        }
+
+        $('.image-upload-wrap').bind('dragover', function() {
+            $('.image-upload-wrap').addClass('image-dropping');
+        });
+        $('.image-upload-wrap').bind('dragleave', function() {
+            $('.image-upload-wrap').removeClass('image-dropping');
+        });
+        </script>
 
 </body>
 </html>
